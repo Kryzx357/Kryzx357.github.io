@@ -1,0 +1,171 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Color Detector</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Header -->
+			<header id="header">
+				<a href="index.html" class="title">Engineering Portfolio</a>
+				<nav>
+					<ul>
+						<li><a href="index.html">Home</a></li>
+						
+						<li>
+							<a href="#">Projects</a>
+							  <ul>
+								<li><a href="Project1.html" class="active">Project 1</a></li>
+								<li><a href="Project2.html" class="active">Project 2</a></li>
+								<li><a href="Project3.html" class="active">Project 3</a></li>
+							  </ul>
+						  </li>
+					</ul>
+				</nav>
+			</header>
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<section id="main" class="wrapper">
+						<div class="inner">
+							<h1 class="major">Color Detector</h1>
+							<span class="image fit"><img src="images/Project1/yellowDay3.jpg" alt="" /></span>
+							<h2 id="sum">Summary</h2>
+							<p>In this project, I created and implemented a live feed color detecting program. Live color detection is a useful
+								basis for many simple <b>Object Detection</b> systems. By performing <b>Image Processing</b> on a webcam feed, I learned to use
+								<b>OpenCV</b> and <b>Pillow</b> libraries in <b>Python</b>. The final product was able to detect 3 different chosen colors on webcam
+								footage.
+							</p><!--(Note that this will need to follow format What->How->Results)-->
+
+							<h2 id="bg">Background</h2>
+								<p>Color detection is a simple easy staple within computer vision. It is often used for simple setups such as comparing
+									positions of an object throughout a video. This technique uses detects a specified color and determines its location
+									in real-time. To do this it uses colorspace conversion, thresholds, binary masks, and bounding box estimation.
+								</p><!--(Note that this will need to explain the why and broad concepts used)-->
+									<h2 id="util">Util.py</h2>
+<pre><code>import numpy as np
+import cv2
+
+
+    def get_limits(color):
+
+    c = np.uint8([[color]])
+    hsvC = cv2.cvtColor(c, cv2.COLOR_BGR2HSV)
+
+    lowerLimit = hsvC[0][0][0] - 10, 100, 100
+    upperLimit = hsvC[0][0][0] + 10, 255, 255
+
+    lowerLimit = np.array(lowerLimit, dtype=np.uint8)
+    upperLimit = np.array(upperLimit, dtype=np.uint8)
+
+    return lowerLimit, upperLimit</code></pre>
+                            <p>This file serves as the primary function to convert a BGR color matrix into an upper an lower limit for detecting isolating a specific color range in an image.
+                                To accomplish this the file uses the <b>Numpy</b> and <b>OpenCV</b> libraries to enable the color conversion code as well as the simplified <b>Numpy</b> arrays. The function takes the three channel matrix
+                                and converts it into the HSV <b>Colorspace</b>. Then creates a lower and upper bound relative to the HSV color matrix. Lastly, the upper and lower limits are formatted into unsigned 8-bit
+                                integers arrays before being returned as the output of the function.
+                            </p>
+                            <!--get an image of the file converting BGR color to HSV Bounds-->
+                            <h2 id="impCol">Imports and color definitions</h2>
+							<pre><code>import cv2
+from PIL import Image
+
+from util import get_limits
+
+
+yellow = [0, 255, 255]  # yellow in BGR colorspace
+green = [0, 255, 0]  # green in BGR colorspace
+red = [0, 0, 255]  # red in BGR colorspace
+
+                                </code></pre>
+								<p>Besides the <a href="#util"><b>util.py</b> </a>function file, the <b>openCV</b> and <b>Pillow</b> libraries are needed. Together these libraries process the images. For this detector 3 different colors were chosen: <u style="color: rgb(255, 255, 0)">Yellow</u>, <u style="color: rgb(0, 255, 0);">Green</u>, & <u style="color: rgb(255, 0, 0);">Red</u>.</p>
+									
+									<h2>Get Color Bounding Box</h2>
+							<pre><code>def load_lims(frame):
+hsv_Image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+lowerLimit, upperLimit = get_limits(color=yellow)
+
+mask = cv2.inRange(hsv_Image, lowerLimit, upperLimit)
+
+mask_ = Image.fromarray(mask)
+
+bbox = mask_.getbbox()
+
+	if bbox is not None:
+		x1, y1, x2, y2 = bbox
+
+		frame = cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 5)
+	return frame</code></pre>
+								<p>This function converts the <b>Colorspace</b> of the image into HSV then runs the function <b>get_limits</b> from the
+									<b>util.py</b> file to get the upper and lower hue <b>Thresholds</b>. Thereafter, a <b>Binary Mask</b> is made from this data.
+									with these mask made each frame, a <b>Bounding Box</b> estimate can be drawn on the original image and returned as the the
+									function output.
+								</p>
+									<!--explain code above-->
+									<h2 id="loadUnload">Load and Unload Live Webcam Feed</h2>
+									<pre><code>cap = cv2.VideoCapture(1)
+
+while True:
+	rate, frame = cap.read()
+
+	frame = load_lims(frame)
+
+	cv2.imshow('web_cam', frame)
+
+	'''Press Q key for exit'''
+
+	if cv2.waitKey(1) & 0xFF == ord('q'):
+		break
+
+cap.release()
+cv2.destroyAllWindows()</code></pre>
+										<p>This last section of code is for webcam integration. It starts by giving the program access to the systems webcam.
+											then in a while loop it reads each processed webcam frame and displays the output as a live feed that can be closed
+											by the "Q" key on the keyboard. Closing the window properly releases the memory.
+										</p>
+
+									<h2 id="optImg">Results</h2>
+									<span class="image fit"><img src="images/Project1/yellowDay5.jpg" alt="" /></span>
+                                <p>This image shows the Image Detection on a Yellow Object.</p>
+                                <span class="image fit"><img src="images/Project1/greenDay6.jpg" alt="" /></span>
+                                <p>This image shows the Image Detection on a Green Object.</p>
+                                <span class="image fit"><img src="images/Project1/redDay10.jpg" alt="" /></span>
+                                <p>This image shows the Image Detection on a Red Object.</p>
+                            
+                            
+                            </div>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer" class="wrapper alt">
+				<div class="inner">
+					<ul class="menu">
+						<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

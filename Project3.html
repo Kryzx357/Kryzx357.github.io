@@ -1,0 +1,186 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Hand Detector Module</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Header -->
+			<header id="header">
+				<a href="index.html" class="title">Engineering Portfolio</a>
+				<nav>
+					<ul>
+						<li><a href="index.html">Home</a></li>
+						
+						<li>
+							<a href="#">Projects</a>
+							  <ul>
+								<li><a href="Project1.html" class="active">Project 1</a></li>
+								<li><a href="Project2.html" class="active">Project 2</a></li>
+								<li><a href="Project3.html" class="active">Project 3</a></li>
+							  </ul>
+						  </li>
+					</ul>
+				</nav>
+			</header>
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<section id="main" class="wrapper">
+						<div class="inner">
+							<h1 class="major">Hand Detector Module</h1>
+							<span class="image fit"><img src="images/Project3/hand3.jpg" alt="" /></span>
+							<h2 id="sum">Summary</h2>
+							<p>In this project, I created and implemented a live feed Hand Tracking program. Hand Tracking is a useful
+								basis for many computer vision projects. By performing <b>Hand Detection</b> on a webcam feed, I learned to use
+								<b>OpenCV</b> and <b>Mediapipe</b> libraries in <b>Python</b>.
+								The final product was able to detect any of the 21 different <b>Landmarks</b> outlined in <b>Google's Mediapipe</b> documentation.
+							</p><!--(Note that this will need to follow format What->How->Results)-->
+
+							<h2 id="bg">Background</h2>
+								<p><b>Hand Tracking</b> is common feature for a variety of computer vision projects.
+									Whether it is in <b>Game Controls</b> or <b>Sign Language Detection</b>, being able to detect hand movement is useful.
+									The key scope of this project was to create a simple base <b>Hand Tracking Module</b> that can be used in more complex projects as necessary.
+								</p><!--(Note that this will need to explain the why and broad concepts used)-->
+
+							<span class="image fit"><img src="images/Project3/hand1.jpg" alt="" /></span>
+                            <h2 id="imp">Imports</h2>
+							<pre><code>import cv2
+import mediapipe as mp
+import time
+								</code></pre>
+								<p><b>OpenCV</b> and <b>Mediapipe</b> libraries are needed. Together these libraries process the images and detect faces. 
+									Aside from this the <b>time</b> module is required for displaying the frames per second that the file is currently running at.
+									</p>
+								<h2 id="HDC">Hand Detector Class</h2>
+								<p>This class contains 3 functions: Init, Find Hands, and Find Position.
+									For ease of readability each function will be discussed separately.
+								</p>
+								<h3 id="init">Init</h3>
+							<pre><code>def __init__(self, mode=False, maxHands=2, modelComp=1, detectionCon=0.5, trackCon=0.5):
+	self.mode = mode
+	self.maxHands = maxHands
+	self.modelComp = modelComp
+	self.detectionCon = detectionCon
+	self.trackCon = trackCon
+
+	self.mpHands = mp.solutions.hands
+	self.hands = self.mpHands.Hands(self.mode, self.maxHands, self.modelComp,
+						self.detectionCon, self.trackCon)
+	self.mpDraw = mp.solutions.drawing_utils
+						</code></pre>
+								<p>This function initializes the <b>Mediapipe</b> hand detection algorithm. It defines the initial parameters of:
+									<b>Mode</b>, <b>Maximum Hands</b>, <b>Model Complexity</b>, <b>Detection Confidence</b>, and <b>Tracking Confidence</b>.
+									Then, it generates the model and enables the <b>Drawing Utilities</b>.
+								</p>
+									<!--explain code above-->
+									<h3 id="FH">Find Hands</h3>
+									<pre><code>def find_hands(self, frame, draw=True):
+	imgRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+	self.results = self.hands.process(imgRGB)
+	# print(results.multi_hand_landmarks)
+
+	if self.results.multi_hand_landmarks:
+		for handLms in self.results.multi_hand_landmarks:
+			if draw:
+				self.mpDraw.draw_landmarks(frame, handLms,
+						self.mpHands.HAND_CONNECTIONS)
+	return frame
+										</code></pre>
+										<p>This function inputs an <b>Image</b> and a <b>Draw Boolean</b>. the image gets converted to hsv <b>Colorspace</b> to be processed.
+										The image processed by the <a href="#init"><b>Initial Hand Detection</b></a> function outputs the <b>Landmarks</b> that can then be drawn each frame.
+										This newly processed Image is returned by this function.
+										</p>
+
+										<h3 id="FP">Find Position</h3>
+<pre><code>def find_position(self, frame, handNo=0, draw=True):
+	
+	lmList = []
+	if self.results.multi_hand_landmarks:
+		myHand = self.results.multi_hand_landmarks[handNo]
+		for id, lm, in enumerate(myHand.landmark):
+			# print(id, lm)
+			h, w, c = frame.shape
+			cx, cy = int(lm.x * w), int(lm.y * h)
+			# print(id, cx, cy)
+			lmList.append([id, cx, cy])
+			if draw:
+				cv2.circle(frame, (cx, cy), 15, (255, 0, 255), cv2.FILLED)
+	return lmList</code></pre>
+                            <p>This function finds the position of a desired <b>Landmark</b>.
+							It does so by creating an empty list that can have the landmark number, X position, and Y position appended to the empty list.
+						This function also has a <b>Draw Boolean</b> so you can enable or disable specific <b>Landmark Visualization</b>.
+						The function returns the list of landmarks.
+						</p>
+                            
+							<!--get an image of the file converting BGR color to HSV Bounds-->
+							<h2 id="ML">Main Loop</h2>
+<pre><code>def main():
+    pTime = 0
+    cTime = 0
+    cap = cv2.VideoCapture(1)
+    detector = HandDetector()
+    while True:
+        ret, frame = cap.read()
+        frame = detector.find_hands(frame)
+        lmList = detector.find_position(frame)
+        if len(lmList) != 0:
+            print(lmList[4])
+
+        cTime = time.time()
+        fps = 1 / (cTime - pTime)
+        pTime = cTime
+
+        cv2.putText(frame, str(int(fps)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3,
+                    (255, 0, 255), 3)
+
+        cv2.imshow('frame', frame)
+        cv2.waitKey(1)
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+                            <p>This function loop displays the frames per second of the program on the live feed as well as runs the entire <b>Hand Detection</b> system.
+							It Does so by defining a <b>Hand Detector Object</b>, accessing the object each frame, and detecting the desired <b>Landmarks</b> each frame.
+							It ensures to wait for landmarks to be saved before detecting them. The system notifies the user by printing the list of landmarks in the terminal.
+							</p>
+									<h2 id="optImg">Results</h2>
+									<div class="col-6"><span class="image fit"><img src="images/Project3/hand2.jpg" alt="" /></span></div>
+
+                                <p>This image shows a sample of the hand detection from th live webcam feed.</p>
+                            </div>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer" class="wrapper alt">
+				<div class="inner">
+					<ul class="menu">
+						<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

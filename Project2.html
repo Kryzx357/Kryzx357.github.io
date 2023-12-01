@@ -1,0 +1,217 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Face Anonymizer</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Header -->
+			<header id="header">
+				<a href="index.html" class="title">Engineering Portfolio</a>
+				<nav>
+					<ul>
+						<li><a href="index.html">Home</a></li>
+						
+						<li>
+							<a href="#">Projects</a>
+							  <ul>
+								<li><a href="Project1.html" class="active">Project 1</a></li>
+								<li><a href="Project2.html" class="active">Project 2</a></li>
+								<li><a href="Project3.html" class="active">Project 3</a></li>
+							  </ul>
+						  </li>
+					</ul>
+				</nav>
+			</header>
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<section id="main" class="wrapper">
+						<div class="inner">
+							<h1 class="major">Face Anonymizer</h1>
+							<div class="row gtr-uniform">
+								<div class="col-6"><span class="image fit"><img src="images/Project2/ScaledOG9.jpg" alt="" /></span></div>
+								<div class="col-6"><span class="image fit"><img src="images/Project2/ScaledAnon9.jpg" alt="" /></span></div>
+							</div>
+							<h2 id="sum">Summary</h2>
+							<p>In this project, I created and implemented a multi-mode Face Anonymizing program. Face Anonymizing is a current
+								research path in computer vision. By performing <b>Image Processing</b> on either An <b>Image</b>, a <b>Video</b>, or a <b>Webcam</b> feed, I learned to use
+								<b>OpenCV</b> and <b>Mediapipe</b> libraries in <b>Python</b>. The final product was able to anonymize faces from one of 3 different modes as defined earlier.
+							</p><!--(Note that this will need to follow format What->How->Results)-->
+
+							<h2 id="bg">Background</h2>
+								<p><b>Face Anonymizing</b> is an <b>Active</b> line of research within computer vision.
+									It is often used for <b>Identity Protection</b> and <b>Privacy</b>. The simple version of this technique uses a <b>Face Detection</b> function and <b>Blurs</b> only the face of the input.
+									The setup here is capable of working on <b>Images</b>, <b>Videos</b>, and <b>Webcam</b> feeds.
+								</p><!--(Note that this will need to explain the why and broad concepts used)-->
+									
+								<div class="row gtr-uniform">
+									<div class="col-6"><span class="image fit"><img src="images/Project2/ScaledOG8.jpg" alt="" /></span></div>
+									<div class="col-6"><span class="image fit"><img src="images/Project2/ScaledAnon8.jpg" alt="" /></span></div>
+								</div>
+                            <h2 id="impCol">Imports</h2>
+							<pre><code>import cv2
+import os
+import argparse
+import mediapipe as mp
+								</code></pre>
+								<p>Both <b>OpenCV</b> and <b>Mediapipe</b> libraries are needed. Together these libraries process the images and detect faces. 
+									Aside from this <b>Os</b> and <b>Argparse</b> modules are required for opening file paths as well as creating modes.
+									</p>
+								<h2 id="FBF">Face Blurring Function</h2>
+							<pre><code>
+def process_img(img, face_detection):
+	# gather image property data
+	H, W, _ = img.shape
+
+	# convert image colorspace
+	img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+	# run face detection
+	out = face_detection.process(img_rgb)
+
+	if out.detections is not None:
+		for detection in out.detections:
+			location_data = detection.location_data
+			bbox = location_data.relative_bounding_box
+
+			# define face bounding box
+			x1, y1, w, h = bbox.xmin, bbox.ymin, bbox.width, bbox.height
+
+			x1 = int(x1 * W)
+			y1 = int(y1 * H)
+			w = int(w * W)
+			h = int(h * H)
+
+			# blur faces
+			img[y1:y1 + h, x1:x1 + w, :] = cv2.blur(img[y1:y1 + h, x1:x1 + w, :], (30, 30))
+
+	return img</code></pre>
+								<p>This function converts the <b>Colorspace</b> of the image into HSV then runs face detection from the
+									<b>Mediapipe</b> library. With the face detection data a <b>Bounding Box</b> of the face is created.
+									Thereafter, the image within the region is <b>Blurred</b>. Afterwards the modified image is returned as the result.
+								</p>
+									<!--explain code above-->
+									<h2 id="RWF">Read & Write Files</h2>
+									<pre><code># read Image
+
+
+args = argparse.ArgumentParser()
+
+args.add_argument("--mode", default="webcam")
+args.add_argument("--filePath", default=os.path.join('.', 'Data', 'rotOut.jpg'))
+
+args = args.parse_args()
+
+
+# create output destination
+output_dir = '.\Data\output'
+if not os.path.exists(output_dir):
+	os.makedirs(output_dir)
+										</code></pre>
+										<p>This section of code takes care of <b>Reading</b> and <b>Writing</b> files. It starts by defining what <b>Mode</b> the program is set to.
+											Then it creates a file path to read from (for none webcam cases). Then it sends these arguments to the <b>Mode Selection</b> section.
+											The last portion writes the output to a defined file destination.
+										</p>
+
+										<h2 id="detFace">Mode Selection</h2>
+<pre><code># detect faces
+mp_face_detection = mp.solutions.face_detection
+	
+with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
+	if args.mode in ["image"]:
+		img = cv2.imread(args.filePath)
+
+		img = process_img(img, face_detection)
+
+		cv2.imwrite(os.path.join(output_dir, 'anon6.jpg'), img)
+	elif args.mode in ['video']:
+		cap = cv2.VideoCapture(args.filePath)
+		ret, frame = cap.read()
+
+		output_video = cv2.VideoWriter(os.path.join(output_dir, 'anon.mp4'),
+						cv2.VideoWriter_fourcc(*'MP4V'),
+						25,
+						(frame.shape[1], frame.shape[0]))
+
+		while ret:
+			frame = process_img(frame, face_detection)
+
+			output_video.write(frame)
+
+			ret, frame = cap.read()
+
+			cap.release()
+			output_video.release()
+
+	elif args.mode in ['webcam']:
+		cap = cv2.VideoCapture(1)
+
+		ret, frame = cap.read()
+		while ret:
+			frame = process_img(frame, face_detection)
+	
+			cv2.imshow('frame', frame)
+			cv2.waitKey(25)
+	
+			ret, frame = cap.read()
+	
+		cap.release()</code></pre>
+                            <p>This section serves as the definition of the 3 modes: <b>Image</b>, <b>Video</b>, and <b>Webcam</b>.
+								The <b>Image Mode</b> inputs the file path for an image, processes the image using the <a href="#FBF"><b>process_image function</b></a>, and outputs the file as a .jpg.
+								The <b>Video Mode</b> inputs the file path for a video, processes the frames using the <a href="#FBF"><b>process_image function</b></a>, and outputs the file as a .mp4.
+								Lastly the <b>Webcam Mode</b> accesses the webcam, processes the frames using the <a href="#FBF"><b>process_image function</b></a>, and outputs the changes to the live webcam feed.
+                            </p>
+                            <!--get an image of the file converting BGR color to HSV Bounds-->
+									<h2 id="optImg">Results</h2>
+									<div class="row gtr-uniform">
+										<div class="col-6"><span class="image fit"><img src="images/Project2/ScaledOG6.jpg" alt="" /></span></div>
+										<div class="col-6"><span class="image fit"><img src="images/Project2/ScaledAnon6.jpg" alt="" /></span></div>
+									</div>
+                                <p>This image set shows a sample of a before an after for an Image using this program.</p>
+                                <div class="row gtr-uniform">
+									<div class="col-6"><span class="image fit"><img src="images/Project2/ScaledOG5.jpg" alt="" /></span></div>
+									<div class="col-6"><span class="image fit"><img src="images/Project2/ScaledAnon5.jpg" alt="" /></span></div>
+								</div>
+                                <p>This image set shows a sample of a before an after for a Video using this program.</p>
+								<div class="row gtr-uniform">
+									<div class="col-6"><span class="image fit"><img src="images/Project2/OGframe2.jpg"" alt="" /></span></div>
+									<div class="col-6"><span class="image fit"><img src="images/Project2/Oframe2.jpg"" alt="" /></span></div>
+								</div>
+                                <p>This image set shows a sample of a before an after for a Webcam using this program.</p>
+                            
+                            </div>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer" class="wrapper alt">
+				<div class="inner">
+					<ul class="menu">
+						<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
